@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Search, UserPlus, UserCheck, UserX } from 'lucide-react';
 
-type Profile = { id: string; username: string; display_name: string };
+type Profile = { id: string; username: string; first_name: string; last_name: string };
 
 
 export const Network = () => {
@@ -26,7 +26,7 @@ export const Network = () => {
     // Fetch accepted friendships
     const { data: acceptedData } = await supabase
       .from('friendships')
-      .select('*, requester:requester_id(id, username, display_name), receiver:receiver_id(id, username, display_name)')
+      .select('*, requester:requester_id(id, username, first_name, last_name), receiver:receiver_id(id, username, first_name, last_name)')
       .eq('status', 'accepted')
       .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
@@ -44,7 +44,7 @@ export const Network = () => {
     // Fetch pending requests where user is receiver
     const { data: pendingData } = await supabase
       .from('friendships')
-      .select('*, requester:requester_id(id, username, display_name)')
+      .select('*, requester:requester_id(id, username, first_name, last_name)')
       .eq('status', 'pending')
       .eq('receiver_id', user.id);
 
@@ -63,7 +63,7 @@ export const Network = () => {
     setIsLoading(true);
     const { data } = await supabase
       .from('profiles')
-      .select('id, username, display_name')
+      .select('id, username, first_name, last_name')
       .ilike('username', `%${searchQuery}%`)
       .neq('id', user.id)
       .limit(10);
@@ -117,7 +117,7 @@ export const Network = () => {
                     {friends.map(f => (
                         <li key={f.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm">
                             <div>
-                                <p className="font-bold text-stone-900">{f.friend.display_name}</p>
+                                <p className="font-bold text-stone-900">{f.friend.first_name} {f.friend.last_name}</p>
                                 <p className="text-sm text-stone-500">@{f.friend.username}</p>
                             </div>
                             <UserCheck className="text-green-600" size={20} />
@@ -137,7 +137,7 @@ export const Network = () => {
                     {pendingRequests.map(req => (
                         <li key={req.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm">
                             <div>
-                                <p className="font-bold text-stone-900">{req.requester.display_name}</p>
+                                <p className="font-bold text-stone-900">{req.requester.first_name} {req.requester.last_name}</p>
                                 <p className="text-sm text-stone-500">@{req.requester.username}</p>
                             </div>
                             <div className="flex gap-2">
@@ -170,7 +170,7 @@ export const Network = () => {
                     {searchResults.map(profile => (
                         <li key={profile.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm">
                             <div>
-                                <p className="font-bold text-stone-900">{profile.display_name}</p>
+                                <p className="font-bold text-stone-900">{profile.first_name} {profile.last_name}</p>
                                 <p className="text-sm text-stone-500">@{profile.username}</p>
                             </div>
                             <button onClick={() => sendRequest(profile.id)} className="flex items-center gap-2 text-stone-700 bg-stone-100 px-4 py-2 rounded-lg hover:bg-stone-200">

@@ -29,10 +29,10 @@ export const Feed = () => {
       const friendIds = friendships.map(f => f.requester_id === user.id ? f.receiver_id : f.requester_id);
       
       // Step 2: Fetch public daily logs from those friends
-      // Using an inner join to profiles to get display_name and username
+      // Using an inner join to profiles to get first_name, last_name and username
       const { data: logs } = await supabase
         .from('daily_logs')
-        .select('*, profiles(id, username, display_name)')
+        .select('*, profiles(id, username, first_name, last_name)')
         .in('user_id', friendIds)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
@@ -72,7 +72,7 @@ export const Feed = () => {
                   <div key={item.id} className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6">
                       <div className="flex items-center justify-between mb-4 pb-4 border-b border-stone-100">
                           <Link to={`/friend/${item.profiles.id}`} className="hover:underline">
-                              <h3 className="font-bold text-stone-900">{item.profiles.display_name}</h3>
+                              <h3 className="font-bold text-stone-900">{item.profiles.first_name} {item.profiles.last_name}</h3>
                               <p className="text-sm text-stone-500">@{item.profiles.username}</p>
                           </Link>
                           <span className="text-xs font-medium bg-stone-100 text-stone-600 px-3 py-1 rounded-full">

@@ -9,7 +9,12 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE profiles (
     id UUID REFERENCES auth.users(id) PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
-    display_name TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    goal_importance INTEGER,
+    goal_why TEXT,
+    time_investment TEXT,
+    interests JSONB DEFAULT '[]'::jsonb,
     avatar_url TEXT,
     bio TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -208,3 +213,18 @@ CREATE TRIGGER update_friendships_updated_at
     BEFORE UPDATE ON friendships
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
+
+---------------------------------------------------------
+-- MIGRATION: RUN THIS MANUALLY IN YOUR SUPABASE SQL EDITOR
+---------------------------------------------------------
+/*
+ALTER TABLE profiles
+  RENAME COLUMN display_name TO first_name;
+  
+ALTER TABLE profiles
+  ADD COLUMN last_name TEXT,
+  ADD COLUMN goal_importance INTEGER,
+  ADD COLUMN goal_why TEXT,
+  ADD COLUMN time_investment TEXT,
+  ADD COLUMN interests JSONB DEFAULT '[]'::jsonb;
+*/
