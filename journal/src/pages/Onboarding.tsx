@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowRight, ArrowLeft, Search, UserPlus } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Search, UserPlus, Check } from 'lucide-react';
 
 const INTERESTS_LIST = [
   { id: 'health', label: 'Health & Fitness', emoji: '🏋️' },
@@ -56,6 +56,7 @@ export const Onboarding = () => {
   // Step 6 variables
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
+  const [requestedUsers, setRequestedUsers] = useState<Set<string>>(new Set());
 
   const updateForm = (updates: Partial<typeof formData>) => setFormData(p => ({ ...p, ...updates }));
 
@@ -374,10 +375,14 @@ export const Onboarding = () => {
   const renderStep6 = () => {
     const handleAddFriend = async (friendId: string) => {
       try {
+        setRequestedUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.add(friendId);
+          return newSet;
+        });
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
         await supabase.from('friendships').insert([{ requester_id: session.user.id, receiver_id: friendId }]);
-        fetchSuggestedUsers(searchQuery); 
       } catch (err) {
         console.error(err);
       }
@@ -413,12 +418,23 @@ export const Onboarding = () => {
                   <p className="text-sm text-stone-500">@{user.username}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => handleAddFriend(user.id)}
-                className="w-10 h-10 bg-stone-50 text-stone-600 rounded-full flex items-center justify-center hover:bg-stone-900 hover:text-white transition-colors"
-              >
-                <UserPlus size={18} />
-              </button>
+              {requestedUsers.has(user.id) ? (
+                <button 
+                  disabled
+                  className="w-10 h-10 bg-sage-green-dark text-white rounded-full flex items-center justify-center shadow-sm"
+                  title="Request Sent"
+                >
+                  <Check size={18} />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => handleAddFriend(user.id)}
+                  className="w-10 h-10 bg-stone-50 text-stone-600 rounded-full flex items-center justify-center hover:bg-stone-900 hover:text-white transition-colors"
+                  title="Add Friend"
+                >
+                  <UserPlus size={18} />
+                </button>
+              )}
             </div>
           ))}
           {suggestedUsers.length === 0 && <p className="text-stone-500 text-center py-8">No users found.</p>}

@@ -228,3 +228,49 @@ ALTER TABLE profiles
   ADD COLUMN time_investment TEXT,
   ADD COLUMN interests JSONB DEFAULT '[]'::jsonb;
 */
+
+---------------------------------------------------------
+-- 6. STORAGE BUCKETS (Avatars)
+---------------------------------------------------------
+-- INSERT INTO storage.buckets (id, name, public) 
+-- VALUES ('avatars', 'avatars', true)
+-- ON CONFLICT (id) DO NOTHING;
+--
+-- CREATE POLICY "Avatar images are publicly accessible."
+--   ON storage.objects FOR SELECT
+--   USING ( bucket_id = 'avatars' );
+--
+-- CREATE POLICY "Users can upload their own avatar."
+--   ON storage.objects FOR INSERT
+--   WITH CHECK ( bucket_id = 'avatars' AND auth.uid() = owner );
+--
+-- CREATE POLICY "Users can update their own avatar."
+--   ON storage.objects FOR UPDATE
+--   USING ( bucket_id = 'avatars' AND auth.uid() = owner );
+
+---------------------------------------------------------
+-- 7. REAL-TIME AND UTILITY FUNCTIONS
+---------------------------------------------------------
+-- Enable Realtime for friendships (run manually if needed)
+-- ALTER PUBLICATION supabase_realtime ADD TABLE friendships;
+
+-- Function to get random profiles for "Suggested for you"
+CREATE OR REPLACE FUNCTION get_random_profiles(limit_num INT, exclude_id UUID)
+RETURNS TABLE (id UUID, username TEXT, first_name TEXT, last_name TEXT, avatar_url TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT p.id, p.username, p.first_name, p.last_name, p.avatar_url
+  FROM profiles p
+  WHERE p.id != exclude_id
+    AND p.id NOT IN (
+      SELECT receiver_id FROM friendships WHERE requester_id = exclude_id
+      UNION
+      SELECT requester_id FROM friendships WHERE receiver_id = exclude_id
+    )
+  ORDER BY random()
+  LIMIT limit_num;
+END;
+$$;
