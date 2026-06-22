@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { JournalProvider } from './context/JournalContext';
 import { Navigation } from './components/Navigation';
 import { Menu } from 'lucide-react';
@@ -8,6 +9,19 @@ import { Dashboard } from './pages/Dashboard';
 import { Vision } from './pages/Vision';
 import { DailyLog } from './pages/DailyLog';
 import { Review } from './pages/Review';
+import { Onboarding } from './pages/Onboarding';
+import { Network } from './pages/Network';
+import { Feed } from './pages/Feed';
+import { FriendDashboard } from './pages/FriendDashboard';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!user) return <Navigate to="/onboarding" replace />;
+  return <>{children}</>;
+};
+
+
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,19 +54,32 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <JournalProvider>
-      <Router>
-        <AppLayout>
+    <AuthProvider>
+      <JournalProvider>
+        <Router>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/vision" element={<Vision />} />
-            <Route path="/day/:id" element={<DailyLog />} />
-            <Route path="/review/:milestone" element={<Review />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            
+            <Route path="*" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/vision" element={<Vision />} />
+                    <Route path="/day/:id" element={<DailyLog />} />
+                    <Route path="/review/:milestone" element={<Review />} />
+                    <Route path="/network" element={<Network />} />
+                    <Route path="/feed" element={<Feed />} />
+                    <Route path="/friend/:id" element={<FriendDashboard />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </AppLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </AppLayout>
-      </Router>
-    </JournalProvider>
+        </Router>
+      </JournalProvider>
+    </AuthProvider>
   );
 }
 

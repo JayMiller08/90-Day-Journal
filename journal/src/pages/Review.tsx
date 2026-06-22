@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useJournal, type MilestoneReview } from '../context/JournalContext';

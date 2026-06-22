@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Target, CalendarDays, Award, X } from 'lucide-react';
+import { LayoutDashboard, Target, CalendarDays, Award, X, Activity, Users, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface NavigationProps {
 
 export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => {
   const closeMenu = () => setIsOpen(false);
+  const { signOut } = useAuth();
 
   return (
     <>
@@ -54,6 +56,34 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => 
           >
             <Target size={20} />
             <span>Vision & Goals</span>
+          </NavLink>
+
+          <div className="pt-6 pb-2 px-4">
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
+              Social
+            </p>
+          </div>
+          
+          <NavLink 
+            to="/feed" 
+            onClick={closeMenu}
+            className={({ isActive }) => 
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-sage-green/10 text-sage-green-dark font-medium' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`
+            }
+          >
+            <Activity size={20} />
+            <span>Feed</span>
+          </NavLink>
+
+          <NavLink 
+            to="/network" 
+            onClick={closeMenu}
+            className={({ isActive }) => 
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-sage-green/10 text-sage-green-dark font-medium' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`
+            }
+          >
+            <Users size={20} />
+            <span>Network</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
@@ -111,6 +141,16 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => 
             <Award size={20} />
             <span>90-Day Review</span>
           </NavLink>
+        </div>
+        
+        <div className="p-4 border-t border-stone-100">
+          <button 
+            onClick={() => signOut()}
+            className="flex items-center space-x-3 px-4 py-3 w-full rounded-xl transition-colors text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+          >
+            <LogOut size={20} />
+            <span>Sign Out</span>
+          </button>
         </div>
       </nav>
     </>

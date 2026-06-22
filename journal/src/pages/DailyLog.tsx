@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useJournal, type DailyLog as DailyLogType } from '../context/JournalContext';
-import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon } from 'lucide-react';
+import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon, Globe, Lock } from 'lucide-react';
 
 const defaultLog: DailyLogType = {
   id: '',
@@ -66,9 +68,24 @@ export const DailyLog: React.FC = () => {
 
   return (
     <div className="p-8 pb-20 max-w-4xl mx-auto animate-fade-in space-y-8">
-      <header className="mb-10">
-        <h1 className="text-4xl font-serif text-stone-900">Day {id}</h1>
-        <p className="text-stone-500 mt-2 text-lg">Your daily workspace for success.</p>
+      <header className="mb-10 flex items-center justify-between">
+        <div>
+            <h1 className="text-4xl font-serif text-stone-900">Day {id}</h1>
+            <p className="text-stone-500 mt-2 text-lg">Your daily workspace for success.</p>
+        </div>
+        <div className="flex items-center gap-3">
+            <button
+                onClick={() => handleChange('is_public' as any, '', !log.is_public)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    log.is_public 
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                        : 'bg-stone-200 text-stone-600 hover:bg-stone-300'
+                }`}
+            >
+                {log.is_public ? <Globe size={18} /> : <Lock size={18} />}
+                {log.is_public ? 'Public' : 'Private'}
+            </button>
+        </div>
       </header>
 
       {/* 1. Morning Success Routine */}
