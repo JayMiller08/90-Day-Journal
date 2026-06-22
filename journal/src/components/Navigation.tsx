@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Target, CalendarDays, Award, X, Activity, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, CalendarDays, Award, X, Activity, Users, LogOut, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
@@ -56,6 +56,17 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => 
           >
             <Target size={20} />
             <span>Vision & Goals</span>
+          </NavLink>
+
+          <NavLink 
+            to="/profile" 
+            onClick={closeMenu}
+            className={({ isActive }) => 
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-sage-green/10 text-sage-green-dark font-medium' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`
+            }
+          >
+            <User size={20} />
+            <span>Profile</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
