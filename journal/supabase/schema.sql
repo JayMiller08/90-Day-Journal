@@ -228,3 +228,26 @@ ALTER TABLE profiles
   ADD COLUMN time_investment TEXT,
   ADD COLUMN interests JSONB DEFAULT '[]'::jsonb;
 */
+
+---------------------------------------------------------
+-- 6. STORAGE BUCKETS (Avatars)
+---------------------------------------------------------
+-- If you are using the Supabase Dashboard, you can just create a public bucket named "avatars" manually.
+-- Or run this SQL:
+/*
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Avatar images are publicly accessible."
+  ON storage.objects FOR SELECT
+  USING ( bucket_id = 'avatars' );
+
+CREATE POLICY "Users can upload their own avatar."
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'avatars' AND auth.uid() = owner );
+
+CREATE POLICY "Users can update their own avatar."
+  ON storage.objects FOR UPDATE
+  USING ( bucket_id = 'avatars' AND auth.uid() = owner );
+*/

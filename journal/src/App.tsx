@@ -13,6 +13,7 @@ import { Onboarding } from './pages/Onboarding';
 import { Network } from './pages/Network';
 import { Feed } from './pages/Feed';
 import { FriendDashboard } from './pages/FriendDashboard';
+import { Profile } from './pages/Profile';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -71,6 +72,7 @@ function App() {
                     <Route path="/network" element={<Network />} />
                     <Route path="/feed" element={<Feed />} />
                     <Route path="/friend/:id" element={<FriendDashboard />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AppLayout>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useJournal } from '../context/JournalContext';
 import { LayoutDashboard, Target, Calendar, ArrowRight } from 'lucide-react';
+import { ProgressHeatmap } from '../components/ProgressHeatmap';
 
 export const Dashboard: React.FC = () => {
   const { state } = useJournal();
@@ -93,6 +94,8 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
       </section>
+
+      <ProgressHeatmap />
     </div>
   );
 };
