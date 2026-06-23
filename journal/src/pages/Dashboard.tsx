@@ -95,6 +95,38 @@ export const Dashboard: React.FC = () => {
         )}
       </section>
 
+      {/* Journal History */}
+      <section className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100">
+        <h2 className="text-xl font-serif text-stone-800 mb-6 border-b border-stone-100 pb-3">Journal History</h2>
+        {completedDays > 0 ? (
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+            {Object.values(state.dailyLogs)
+              .sort((a, b) => Number(b.id) - Number(a.id))
+              .map(log => (
+                <Link 
+                  key={log.id} 
+                  to={`/day/${log.id}`} 
+                  state={{ isReadonly: true }}
+                  className="flex items-center justify-between p-4 bg-stone-50 hover:bg-stone-100 rounded-xl transition-colors border border-stone-100"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-sage-green-dark text-white rounded-full flex items-center justify-center font-bold">
+                      {log.id}
+                    </div>
+                    <div>
+                      <p className="font-bold text-stone-900">Day {log.id}</p>
+                      <p className="text-sm text-stone-500 line-clamp-1">{log.evening?.biggestWin || 'No evening reflection'}</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={18} className="text-stone-400" />
+                </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-stone-500 text-center py-4">No entries yet. Start writing today!</p>
+        )}
+      </section>
+
       <ProgressHeatmap />
     </div>
   );

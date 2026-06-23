@@ -1,100 +1,82 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { useJournal, type DailyLog as DailyLogType } from '../context/JournalContext';
-import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon, Globe, Lock } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon, ArrowLeft } from 'lucide-react';
+import type { DailyLog as DailyLogType } from '../context/JournalContext';
 
-const defaultLog: DailyLogType = {
-  id: '',
-  morning: { wakeUpTime: '', mood: '😊', energy: 5, top3Priorities: ['', '', ''] },
-  meditation: { minutes: 0, focus: '', insight: '' },
-  faith: { bibleVerse: '', prayerPoints: '' },
-  business: { tasksCompleted: '', progressMade: '' },
-  health: { exercise: '', duration: 0, waterIntake: 0, nutrition: '' },
-  financial: { earned: 0, spent: 0, saved: 0, notes: '' },
-  habits: { read: false, exercise: false, pray: false, meditate: false, saveMoney: false, learn: false },
-  gratitude: ['', '', ''],
-  evening: { biggestWin: '', lessonLearned: '', improveTomorrow: '' }
-};
-
-export const DailyLog: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  const isReadonly = location.state?.isReadonly || false;
-  const { state, saveDailyLog } = useJournal();
-  const [log, setLog] = useState<DailyLogType>(defaultLog);
+export const FriendDailyLog: React.FC = () => {
+  const { friendId, dateId } = useParams<{ friendId: string; dateId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [log, setLog] = useState<DailyLogType | null>(null);
+  const [friend, setFriend] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      setLog(state.dailyLogs[id] || { ...defaultLog, id });
-    }
-  }, [id, state.dailyLogs]);
+    const fetchData = async () => {
+      if (!user || !friendId || !dateId) return;
 
-  const handleChange = (section: keyof DailyLogType, field: string, value: any) => {
-    if (isReadonly) return;
-    setLog(prev => {
-      const newLog = {
-        ...prev,
-        [section]: {
-          ...(prev[section] as any),
-          [field]: value
-        }
-      };
-      if (id) saveDailyLog(id, newLog);
-      return newLog;
-    });
-  };
+      // Check friendship
+      const { data: friendship } = await supabase
+        .from('friendships')
+        .select('id')
+        .eq('status', 'accepted')
+        .or(`and(requester_id.eq.${user.id},receiver_id.eq.${friendId}),and(requester_id.eq.${friendId},receiver_id.eq.${user.id})`)
+        .maybeSingle();
 
-  const handleArrayChange = (section: keyof DailyLogType, index: number, value: string) => {
-    if (isReadonly) return;
-    setLog(prev => {
-      const newArray = [...(prev[section] as string[])];
-      newArray[index] = value;
-      const newLog = { ...prev, [section]: newArray };
-      if (id) saveDailyLog(id, newLog);
-      return newLog;
-    });
-  };
+      if (!friendship) {
+        setIsLoading(false);
+        return;
+      }
 
-  const handleMorningPriority = (index: number, value: string) => {
-    if (isReadonly) return;
-    setLog(prev => {
-      const newPriorities = [...prev.morning.top3Priorities];
-      newPriorities[index] = value;
-      const newLog = {
-        ...prev,
-        morning: { ...prev.morning, top3Priorities: newPriorities }
-      };
-      if (id) saveDailyLog(id, newLog as DailyLogType);
-      return newLog as DailyLogType;
-    });
-  };
+      const { data: profileData } = await supabase.from('profiles').select('first_name, last_name').eq('id', friendId).maybeSingle();
+      if (profileData) setFriend(profileData);
+
+      const { data: logData } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', friendId)
+        .eq('date_id', dateId)
+        .eq('is_public', true)
+        .maybeSingle();
+
+      if (logData) {
+        setLog({
+          id: logData.date_id,
+          is_public: logData.is_public,
+          morning: logData.morning,
+          meditation: logData.meditation,
+          faith: logData.faith,
+          business: logData.business,
+          health: logData.health,
+          financial: logData.financial,
+          habits: logData.habits,
+          gratitude: logData.gratitude,
+          evening: logData.evening,
+        });
+      }
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [friendId, dateId, user]);
+
+  if (isLoading) return <div className="p-8">Loading...</div>;
+  if (!log) return <div className="p-8">Entry not found or is private.</div>;
 
   return (
     <div className="p-8 pb-20 max-w-4xl mx-auto animate-fade-in space-y-8">
       <header className="mb-10 flex items-center justify-between">
         <div>
-            <h1 className="text-4xl font-serif text-stone-900">Day {id} {isReadonly && <span className="text-2xl text-stone-400 ml-2">(Read-Only)</span>}</h1>
-            <p className="text-stone-500 mt-2 text-lg">Your daily workspace for success.</p>
-        </div>
-        <div className="flex items-center gap-3">
-            <button
-                disabled={isReadonly}
-                onClick={() => handleChange('is_public' as any, '', !log.is_public)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    log.is_public 
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                        : 'bg-stone-200 text-stone-600 hover:bg-stone-300'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-                {log.is_public ? <Globe size={18} /> : <Lock size={18} />}
-                {log.is_public ? 'Public' : 'Private'}
+            <button onClick={() => navigate(-1)} className="flex items-center text-stone-500 hover:text-stone-900 mb-4 transition-colors">
+                <ArrowLeft size={16} className="mr-2" /> Back
             </button>
+            <h1 className="text-4xl font-serif text-stone-900">Day {dateId} <span className="text-2xl text-stone-400 ml-2">({friend?.first_name}'s Journal)</span></h1>
         </div>
       </header>
 
-      <fieldset disabled={isReadonly} className="space-y-8 border-none p-0 m-0">
+      <fieldset disabled={true} className="space-y-8 border-none p-0 m-0 opacity-90">
       {/* 1. Morning Success Routine */}
       <section className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
         <div className="bg-stone-50 border-b border-stone-100 px-6 py-4 flex items-center">
@@ -105,12 +87,12 @@ export const DailyLog: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Wake-up time</label>
-              <input type="time" value={log.morning.wakeUpTime} onChange={e => handleChange('morning', 'wakeUpTime', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green focus:border-transparent" />
+              <input type="time" value={log.morning.wakeUpTime} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green focus:border-transparent" />
             </div>
             <div className="flex space-x-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-stone-600 mb-1">Mood</label>
-                <select value={log.morning.mood} onChange={e => handleChange('morning', 'mood', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green focus:border-transparent">
+                <select value={log.morning.mood} disabled className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green focus:border-transparent">
                   <option value="🤩">🤩 Excellent</option>
                   <option value="😊">😊 Good</option>
                   <option value="😐">😐 Neutral</option>
@@ -119,17 +101,17 @@ export const DailyLog: React.FC = () => {
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium text-stone-600 mb-1">Energy: {log.morning.energy}</label>
-                <input type="range" min="1" max="10" value={log.morning.energy} onChange={e => handleChange('morning', 'energy', parseInt(e.target.value))} className="w-full mt-2 accent-sage-green" />
+                <input type="range" min="1" max="10" value={log.morning.energy} readOnly className="w-full mt-2 accent-sage-green" />
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-600 mb-2">Today's Top 3 Priorities</label>
+            <label className="block text-sm font-medium text-stone-600 mb-2">Top 3 Priorities</label>
             <div className="space-y-2">
               {[0, 1, 2].map(i => (
                 <div key={i} className="flex items-center space-x-2">
                   <span className="text-stone-400 font-medium">{i + 1}.</span>
-                  <input type="text" value={log.morning.top3Priorities[i]} onChange={e => handleMorningPriority(i, e.target.value)} className="flex-1 border-stone-200 rounded-lg p-2 text-sm focus:ring-sage-green" />
+                  <input type="text" value={log.morning.top3Priorities[i] || ''} readOnly className="flex-1 border-stone-200 rounded-lg p-2 text-sm focus:ring-sage-green" />
                 </div>
               ))}
             </div>
@@ -147,16 +129,16 @@ export const DailyLog: React.FC = () => {
           <div className="md:col-span-1 space-y-4">
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Minutes meditated</label>
-              <input type="number" min="0" value={log.meditation.minutes} onChange={e => handleChange('meditation', 'minutes', parseInt(e.target.value) || 0)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+              <input type="number" value={log.meditation.minutes} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Focus</label>
-              <input type="text" value={log.meditation.focus} onChange={e => handleChange('meditation', 'focus', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+              <input type="text" value={log.meditation.focus} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
             </div>
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-stone-600 mb-1">Key insight</label>
-            <textarea value={log.meditation.insight} onChange={e => handleChange('meditation', 'insight', e.target.value)} className="w-full h-full min-h-[100px] border-stone-200 rounded-lg p-3 focus:ring-sage-green resize-none" />
+            <textarea value={log.meditation.insight} readOnly className="w-full h-full min-h-[100px] border-stone-200 rounded-lg p-3 focus:ring-sage-green resize-none" />
           </div>
         </div>
       </section>
@@ -170,11 +152,11 @@ export const DailyLog: React.FC = () => {
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Bible verse of the day</label>
-            <input type="text" value={log.faith.bibleVerse} onChange={e => handleChange('faith', 'bibleVerse', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green font-serif italic text-stone-700" />
+            <input type="text" value={log.faith.bibleVerse} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green font-serif italic text-stone-700" />
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Prayer points</label>
-            <textarea value={log.faith.prayerPoints} onChange={e => handleChange('faith', 'prayerPoints', e.target.value)} className="w-full border-stone-200 rounded-lg p-3 min-h-[100px] focus:ring-sage-green" />
+            <textarea value={log.faith.prayerPoints} readOnly className="w-full border-stone-200 rounded-lg p-3 min-h-[100px] focus:ring-sage-green" />
           </div>
         </div>
       </section>
@@ -188,11 +170,11 @@ export const DailyLog: React.FC = () => {
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Tasks completed</label>
-            <textarea value={log.business.tasksCompleted} onChange={e => handleChange('business', 'tasksCompleted', e.target.value)} placeholder="• Finished the report..." className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
+            <textarea value={log.business.tasksCompleted} readOnly className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Progress made today</label>
-            <textarea value={log.business.progressMade} onChange={e => handleChange('business', 'progressMade', e.target.value)} className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
+            <textarea value={log.business.progressMade} readOnly className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
           </div>
         </div>
       </section>
@@ -207,26 +189,24 @@ export const DailyLog: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Exercise completed</label>
-              <input type="text" value={log.health.exercise} onChange={e => handleChange('health', 'exercise', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+              <input type="text" value={log.health.exercise} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
             </div>
             <div className="flex space-x-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-stone-600 mb-1">Duration (min)</label>
-                <input type="number" value={log.health.duration} onChange={e => handleChange('health', 'duration', parseInt(e.target.value) || 0)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+                <input type="number" value={log.health.duration} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium text-stone-600 mb-1">Water (glasses)</label>
                 <div className="flex items-center space-x-2">
-                  <button onClick={() => handleChange('health', 'waterIntake', Math.max(0, log.health.waterIntake - 1))} className="px-3 py-2 bg-stone-100 rounded-lg hover:bg-stone-200">-</button>
                   <span className="font-medium text-lg w-6 text-center">{log.health.waterIntake}</span>
-                  <button onClick={() => handleChange('health', 'waterIntake', log.health.waterIntake + 1)} className="px-3 py-2 bg-stone-100 rounded-lg hover:bg-stone-200">+</button>
                 </div>
               </div>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Nutrition notes</label>
-            <textarea value={log.health.nutrition} onChange={e => handleChange('health', 'nutrition', e.target.value)} className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
+            <textarea value={log.health.nutrition} readOnly className="w-full border-stone-200 rounded-lg p-3 min-h-[120px] focus:ring-sage-green" />
           </div>
         </div>
       </section>
@@ -242,20 +222,20 @@ export const DailyLog: React.FC = () => {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="block text-xs font-medium text-stone-500 mb-1">Earned</label>
-                <input type="number" value={log.financial.earned} onChange={e => handleChange('financial', 'earned', parseFloat(e.target.value) || 0)} className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
+                <input type="number" value={log.financial.earned} readOnly className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-stone-500 mb-1">Spent</label>
-                <input type="number" value={log.financial.spent} onChange={e => handleChange('financial', 'spent', parseFloat(e.target.value) || 0)} className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
+                <input type="number" value={log.financial.spent} readOnly className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-stone-500 mb-1">Saved</label>
-                <input type="number" value={log.financial.saved} onChange={e => handleChange('financial', 'saved', parseFloat(e.target.value) || 0)} className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
+                <input type="number" value={log.financial.saved} readOnly className="w-full border-stone-200 rounded-lg p-2 focus:ring-sage-green" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Investment notes</label>
-              <textarea value={log.financial.notes} onChange={e => handleChange('financial', 'notes', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 h-20 focus:ring-sage-green" />
+              <textarea value={log.financial.notes} readOnly className="w-full border-stone-200 rounded-lg p-2.5 h-20 focus:ring-sage-green" />
             </div>
           </div>
         </section>
@@ -267,14 +247,14 @@ export const DailyLog: React.FC = () => {
           </div>
           <div className="p-6 grid grid-cols-2 gap-4">
             {Object.entries(log.habits).map(([habit, isChecked]) => (
-              <label key={habit} className="flex items-center space-x-3 cursor-pointer group">
+              <label key={habit} className="flex items-center space-x-3 cursor-not-allowed group">
                 <input 
                   type="checkbox" 
                   checked={isChecked} 
-                  onChange={e => handleChange('habits', habit, e.target.checked)}
-                  className="w-5 h-5 text-sage-green-dark border-stone-300 rounded focus:ring-sage-green cursor-pointer"
+                  disabled
+                  className="w-5 h-5 text-sage-green-dark border-stone-300 rounded focus:ring-sage-green"
                 />
-                <span className={`capitalize transition-colors ${isChecked ? 'text-sage-green-dark font-medium' : 'text-stone-600 group-hover:text-stone-800'}`}>
+                <span className={`capitalize transition-colors ${isChecked ? 'text-sage-green-dark font-medium' : 'text-stone-600'}`}>
                   {habit.replace(/([A-Z])/g, ' $1').trim()}
                 </span>
               </label>
@@ -294,7 +274,7 @@ export const DailyLog: React.FC = () => {
           {[0, 1, 2].map(i => (
             <div key={i} className="flex items-center space-x-3">
               <span className="w-6 text-center text-stone-400 font-serif italic text-lg">{i + 1}</span>
-              <input type="text" value={log.gratitude[i]} onChange={e => handleArrayChange('gratitude', i, e.target.value)} className="flex-1 bg-transparent border-b border-stone-200 focus:border-sage-green focus:outline-none py-2 px-1 transition-colors" />
+              <input type="text" value={log.gratitude[i] || ''} readOnly className="flex-1 bg-transparent border-b border-stone-200 focus:border-sage-green focus:outline-none py-2 px-1" />
             </div>
           ))}
         </div>
@@ -309,20 +289,19 @@ export const DailyLog: React.FC = () => {
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Biggest win today</label>
-            <input type="text" value={log.evening.biggestWin} onChange={e => handleChange('evening', 'biggestWin', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green bg-stone-50" />
+            <input type="text" value={log.evening.biggestWin} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green bg-stone-50" />
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">Lesson learned</label>
-            <input type="text" value={log.evening.lessonLearned} onChange={e => handleChange('evening', 'lessonLearned', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+            <input type="text" value={log.evening.lessonLearned} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-600 mb-1">What can I improve tomorrow?</label>
-            <input type="text" value={log.evening.improveTomorrow} onChange={e => handleChange('evening', 'improveTomorrow', e.target.value)} className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
+            <input type="text" value={log.evening.improveTomorrow} readOnly className="w-full border-stone-200 rounded-lg p-2.5 focus:ring-sage-green" />
           </div>
         </div>
       </section>
       </fieldset>
-
     </div>
   );
 };

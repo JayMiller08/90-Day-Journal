@@ -113,7 +113,7 @@ CREATE TABLE daily_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES profiles(id) NOT NULL,
     date_id TEXT NOT NULL, -- e.g., '1', '2', etc. or a formatted date string
-    is_public BOOLEAN DEFAULT false, -- If true, friends can view. If false, strictly private.
+    is_public BOOLEAN DEFAULT true, -- If true, friends can view. If false, strictly private.
     morning JSONB NOT NULL DEFAULT '{}'::jsonb,
     meditation JSONB NOT NULL DEFAULT '{}'::jsonb,
     faith JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -278,3 +278,48 @@ BEGIN
   LIMIT limit_num;
 END;
 $$;
+
+---------------------------------------------------------
+-- 8. NOTIFICATIONS
+---------------------------------------------------------
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    receiver_id UUID REFERENCES profiles(id) NOT NULL,
+    sender_id UUID REFERENCES profiles(id) NOT NULL,
+    type TEXT NOT NULL,
+    referenced_log_id TEXT,
+    read_status BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own notifications."
+    ON notifications FOR ALL
+    USING ( auth.uid() = receiver_id );
+
+-- Trigger function for notifications
+CREATE OR REPLACE FUNCTION notify_friends_on_log()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO notifications (receiver_id, sender_id, type, referenced_log_id)
+  SELECT 
+    CASE WHEN requester_id = NEW.user_id THEN receiver_id ELSE requester_id END,
+    NEW.user_id,
+    'new_entry',
+    NEW.date_id
+  FROM friendships
+  WHERE status = 'accepted' AND (requester_id = NEW.user_id OR receiver_id = NEW.user_id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger should only fire on new logs or when a log becomes public for the first time?
+-- The prompt says: "Whenever a new row is inserted into daily_logs"
+CREATE TRIGGER on_daily_log_insert
+  AFTER INSERT ON daily_logs
+  FOR EACH ROW
+  EXECUTE PROCEDURE notify_friends_on_log();
+
+-- Add to Realtime (uncomment and run manually in Supabase Dashboard)
+-- ALTER PUBLICATION supabase_realtime ADD TABLE notifications;

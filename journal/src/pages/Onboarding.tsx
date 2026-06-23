@@ -23,6 +23,8 @@ export const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [hasSession, setHasSession] = useState(false);
+
   // Redirect if already fully onboarded
   useEffect(() => {
     const checkState = async () => {
@@ -32,11 +34,22 @@ export const Onboarding = () => {
         // If they have a profile, kick them to dashboard
         if (profile) {
           navigate('/');
+        } else {
+          // OAuth User without profile
+          setHasSession(true);
+          const nameParts = session.user.user_metadata?.full_name?.split(' ') || [];
+          setFormData(p => ({
+            ...p,
+            email: session.user.email || '',
+            firstName: p.firstName || nameParts[0] || '',
+            lastName: p.lastName || nameParts.slice(1).join(' ') || '',
+          }));
+          if (step === 0) setStep(1);
         }
       }
     };
     checkState();
-  }, [navigate]);
+  }, [navigate, step]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -99,15 +112,24 @@ export const Onboarding = () => {
       const { data: existingUser } = await supabase.from('profiles').select('username').eq('username', formData.username).maybeSingle();
       if (existingUser) throw new Error('Username is already taken');
 
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('Failed to create account.');
+      let userId = '';
+
+      if (hasSession) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error('Session lost');
+        userId = session.user.id;
+      } else {
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (signUpError) throw signUpError;
+        if (!authData.user) throw new Error('Failed to create account.');
+        userId = authData.user.id;
+      }
 
       const { error: profileError } = await supabase.from('profiles').insert([{ 
-        id: authData.user.id, 
+        id: userId, 
         username: formData.username, 
         first_name: formData.firstName,
         last_name: formData.lastName
@@ -280,20 +302,24 @@ export const Onboarding = () => {
           <label className="block text-sm font-medium text-stone-700 mb-1">Username</label>
           <input type="text" required value={formData.username} onChange={e => updateForm({username: e.target.value})} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Email Address</label>
-          <input type="email" required value={formData.email} onChange={e => updateForm({email: e.target.value})} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
-          <input type="password" required value={formData.password} onChange={e => updateForm({password: e.target.value})} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
-        </div>
+        {!hasSession && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Email Address</label>
+              <input type="email" required value={formData.email} onChange={e => updateForm({email: e.target.value})} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
+              <input type="password" required value={formData.password} onChange={e => updateForm({password: e.target.value})} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
+            </div>
+          </>
+        )}
       </div>
       <div className="pt-4 flex gap-4">
         <button onClick={() => setStep(0)} className="w-14 h-14 bg-white border border-stone-200 rounded-xl flex items-center justify-center text-stone-500 hover:bg-stone-50 transition-colors"><ArrowLeft size={20} /></button>
         <button 
           onClick={handleCreateAccount} 
-          disabled={isLoading || !formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password}
+          disabled={isLoading || !formData.firstName || !formData.lastName || !formData.username || (!hasSession && (!formData.email || !formData.password))}
           className="flex-1 bg-stone-900 text-white rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isLoading ? 'Creating...' : 'Continue'} <ArrowRight size={20} />
