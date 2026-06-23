@@ -323,3 +323,33 @@ CREATE TRIGGER on_daily_log_insert
 
 -- Add to Realtime (uncomment and run manually in Supabase Dashboard)
 -- ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+
+---------------------------------------------------------
+-- 9. CASCADE DELETION POLICIES (Run Manually)
+---------------------------------------------------------
+-- Run this in your Supabase SQL editor to allow deleting users directly from auth.users
+-- This will automatically cascade and delete their profile, logs, friendships, etc.
+
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+ALTER TABLE profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE friendships DROP CONSTRAINT IF EXISTS friendships_requester_id_fkey;
+ALTER TABLE friendships ADD CONSTRAINT friendships_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE friendships DROP CONSTRAINT IF EXISTS friendships_receiver_id_fkey;
+ALTER TABLE friendships ADD CONSTRAINT friendships_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE goals DROP CONSTRAINT IF EXISTS goals_user_id_fkey;
+ALTER TABLE goals ADD CONSTRAINT goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE daily_logs DROP CONSTRAINT IF EXISTS daily_logs_user_id_fkey;
+ALTER TABLE daily_logs ADD CONSTRAINT daily_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE milestone_reviews DROP CONSTRAINT IF EXISTS milestone_reviews_user_id_fkey;
+ALTER TABLE milestone_reviews ADD CONSTRAINT milestone_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_receiver_id_fkey;
+ALTER TABLE notifications ADD CONSTRAINT notifications_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_sender_id_fkey;
+ALTER TABLE notifications ADD CONSTRAINT notifications_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES profiles(id) ON DELETE CASCADE;
