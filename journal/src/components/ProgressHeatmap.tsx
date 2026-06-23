@@ -53,7 +53,7 @@ export const ProgressHeatmap: React.FC = () => {
                 onMouseLeave={() => setHoveredDay(null)}
               >
                 <button
-                  onClick={() => navigate(`/day/${day}`)}
+                  onClick={() => navigate(`/day/${day}`, { state: { isReadonly: !!state.dailyLogs[day.toString()] } })}
                   className={`w-5 h-5 rounded-sm border ${getColorClass(score)} transition-all duration-200 hover:ring-2 ring-stone-400 ring-offset-1 block`}
                   aria-label={`Day ${day}`}
                 />

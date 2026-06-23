@@ -24,6 +24,8 @@ export const DailyLog: React.FC = () => {
   const isReadonly = location.state?.isReadonly || false;
   const { state, saveDailyLog } = useJournal();
   const [log, setLog] = useState<DailyLogType>(defaultLog);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -41,7 +43,6 @@ export const DailyLog: React.FC = () => {
           [field]: value
         }
       };
-      if (id) saveDailyLog(id, newLog);
       return newLog;
     });
   };
@@ -52,7 +53,6 @@ export const DailyLog: React.FC = () => {
       const newArray = [...(prev[section] as string[])];
       newArray[index] = value;
       const newLog = { ...prev, [section]: newArray };
-      if (id) saveDailyLog(id, newLog);
       return newLog;
     });
   };
@@ -66,7 +66,6 @@ export const DailyLog: React.FC = () => {
         ...prev,
         morning: { ...prev.morning, top3Priorities: newPriorities }
       };
-      if (id) saveDailyLog(id, newLog as DailyLogType);
       return newLog as DailyLogType;
     });
   };
@@ -322,6 +321,51 @@ export const DailyLog: React.FC = () => {
         </div>
       </section>
       </fieldset>
+
+      {!isReadonly && (
+        <div className="flex justify-end pt-4">
+          <button
+            onClick={async () => {
+              if (!id) return;
+              setIsSaving(true);
+              try {
+                await saveDailyLog(id, log);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 4000);
+              } catch (error) {
+                console.error("Failed to save entry", error);
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-stone-900 text-white px-8 py-3 rounded-xl font-medium hover:bg-stone-800 transition-colors disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              'Save Entry'
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Success Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 bg-stone-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-fade-in z-50">
+          <CheckSquare className="text-sage-green" size={24} />
+          <div>
+            <p className="font-medium">Entry saved.</p>
+            <p className="text-stone-300 text-sm">Your friends have been notified.</p>
+          </div>
+        </div>
+      )}
 
     </div>
   );

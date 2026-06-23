@@ -49,7 +49,7 @@ export const Onboarding = () => {
       }
     };
     checkState();
-  }, [navigate, step]);
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     firstName: '',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useJournal } from '../context/JournalContext';
-import { LayoutDashboard, Target, Calendar, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, Target, Calendar, ArrowRight, CheckSquare } from 'lucide-react';
 import { ProgressHeatmap } from '../components/ProgressHeatmap';
 
 export const Dashboard: React.FC = () => {
@@ -10,6 +10,10 @@ export const Dashboard: React.FC = () => {
   // Calculate completed daily logs
   const completedDays = Object.keys(state.dailyLogs).length;
   const progressPercentage = Math.round((completedDays / 90) * 100);
+
+  // Assuming '1' is today for the prototype, or we calculate it. For now, check if '1' exists.
+  // Actually, we should check if the current active day exists.
+  const todayEntry = state.dailyLogs['1'];
 
   return (
     <div className="p-8 max-w-4xl mx-auto animate-fade-in space-y-10">
@@ -52,8 +56,17 @@ export const Dashboard: React.FC = () => {
             <p className="text-stone-600 text-sm">Log your morning routine, habits, and daily reflection.</p>
           </div>
           <div className="flex items-center text-sage-green-dark font-medium mt-4 group-hover:translate-x-1 transition-transform">
-            <span>Start Writing</span>
-            <ArrowRight size={16} className="ml-2" />
+            {todayEntry ? (
+              <>
+                <span className="flex items-center"><CheckSquare size={16} className="mr-2" /> Logged (Update Entry)</span>
+                <ArrowRight size={16} className="ml-2" />
+              </>
+            ) : (
+              <>
+                <span>Start Writing</span>
+                <ArrowRight size={16} className="ml-2" />
+              </>
+            )}
           </div>
         </Link>
 

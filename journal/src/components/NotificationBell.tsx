@@ -30,7 +30,8 @@ export const NotificationBell: React.FC = () => {
 
     fetchNotifications();
 
-    const channel = supabase.channel('notifications_channel')
+    const channelId = `notifications_channel_${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelId)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',

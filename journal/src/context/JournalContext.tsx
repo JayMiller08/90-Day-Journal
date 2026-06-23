@@ -209,7 +209,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     const dbPayload = {
       user_id: user.id,
       date_id: id,
-      is_public: log.is_public ?? false,
+      is_public: log.is_public ?? true,
       morning: log.morning,
       meditation: log.meditation,
       faith: log.faith,
