@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Search, UserPlus, UserCheck, UserX, Clock } from 'lucide-react';
@@ -180,13 +181,13 @@ export const Network = () => {
                 <ul className="space-y-4">
                     {friends.map(f => (
                         <li key={f.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-4">
+                            <Link to={`/friend/${f.friend.id}`} className="flex items-center gap-4 flex-1 group">
                                 {renderAvatar(f.friend)}
                                 <div>
-                                    <p className="font-bold text-stone-900">{f.friend.first_name} {f.friend.last_name}</p>
+                                    <p className="font-bold text-stone-900 group-hover:text-sage-green-dark transition-colors">{f.friend.first_name} {f.friend.last_name}</p>
                                     <p className="text-sm text-stone-500">@{f.friend.username}</p>
                                 </div>
-                            </div>
+                            </Link>
                             <UserCheck className="text-sage-green-dark" size={20} />
                         </li>
                     ))}
@@ -203,13 +204,13 @@ export const Network = () => {
                 <ul className="space-y-4">
                     {pendingRequestsIn.map(req => (
                         <li key={req.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm">
-                            <div className="flex items-center gap-4">
+                            <Link to={`/friend/${req.requester.id}`} className="flex items-center gap-4 flex-1 group">
                                 {renderAvatar(req.requester)}
                                 <div>
-                                    <p className="font-bold text-stone-900">{req.requester.first_name} {req.requester.last_name}</p>
+                                    <p className="font-bold text-stone-900 group-hover:text-sage-green-dark transition-colors">{req.requester.first_name} {req.requester.last_name}</p>
                                     <p className="text-sm text-stone-500">@{req.requester.username}</p>
                                 </div>
-                            </div>
+                            </Link>
                             <div className="flex gap-2">
                                 <button onClick={() => acceptRequest(req.id)} className="p-2.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/20" title="Accept"><UserCheck size={18} /></button>
                                 <button onClick={() => declineRequest(req.id)} className="p-2.5 bg-red-50 border border-red-100 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Decline"><UserX size={18} /></button>
@@ -246,13 +247,13 @@ export const Network = () => {
                       
                       return (
                         <li key={profile.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-4">
+                            <Link to={`/friend/${profile.id}`} className="flex items-center gap-4 flex-1 group">
                                 {renderAvatar(profile)}
                                 <div>
-                                    <p className="font-bold text-stone-900">{profile.first_name} {profile.last_name}</p>
+                                    <p className="font-bold text-stone-900 group-hover:text-sage-green-dark transition-colors">{profile.first_name} {profile.last_name}</p>
                                     <p className="text-sm text-stone-500">@{profile.username}</p>
                                 </div>
-                            </div>
+                            </Link>
                             
                             {isFriend ? (
                               <button disabled className="flex items-center gap-2 text-sage-green-dark bg-sage-green/10 px-4 py-2 rounded-lg font-medium">

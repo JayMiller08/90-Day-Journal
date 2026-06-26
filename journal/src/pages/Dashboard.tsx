@@ -26,14 +26,14 @@ export const Dashboard: React.FC = () => {
       </header>
 
       {/* Progress Overview */}
-      <section className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between">
+      <section className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-stone-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-0">
         <div>
           <h2 className="text-sm uppercase tracking-wider font-semibold text-stone-400 mb-1">Macro Progress</h2>
           <p className="text-4xl font-serif text-stone-800">
             Day <span className="text-sage-green-dark">{completedDays}</span> <span className="text-2xl text-stone-400">/ 90</span>
           </p>
         </div>
-        <div className="w-1/2">
+        <div className="w-full md:w-1/2">
           <div className="flex justify-between text-sm font-medium text-stone-500 mb-2">
             <span>Progress</span>
             <span>{progressPercentage}%</span>
