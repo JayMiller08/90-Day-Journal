@@ -10,6 +10,8 @@ import { Vision } from './pages/Vision';
 import { DailyLog } from './pages/DailyLog';
 import { Review } from './pages/Review';
 import { Onboarding } from './pages/Onboarding';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { Network } from './pages/Network';
 import { Feed } from './pages/Feed';
 import { FriendDashboard } from './pages/FriendDashboard';
@@ -72,6 +74,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             <Route path="*" element={
               <ProtectedRoute>

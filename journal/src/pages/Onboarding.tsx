@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ArrowRight, ArrowLeft, Search, UserPlus, Check } from 'lucide-react';
 
@@ -218,6 +218,9 @@ export const Onboarding = () => {
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
           <input type="password" required value={loginData.password} onChange={e => setLoginData(p => ({...p, password: e.target.value}))} className="w-full p-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-900 outline-none" />
+          <div className="flex justify-end mt-2">
+            <Link to="/forgot-password" className="text-sm text-stone-500 hover:text-stone-900 transition-colors">Forgot Password?</Link>
+          </div>
         </div>
         <button type="submit" disabled={isLoading} className="w-full py-4 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors mt-4 mb-2">
           {isLoading ? 'Logging in...' : 'Login'}
