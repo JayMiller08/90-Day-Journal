@@ -5,15 +5,13 @@ import { LayoutDashboard, Target, Calendar, ArrowRight, CheckSquare } from 'luci
 import { ProgressHeatmap } from '../components/ProgressHeatmap';
 
 export const Dashboard: React.FC = () => {
-  const { state } = useJournal();
+  const { state, currentDayId } = useJournal();
   
   // Calculate completed daily logs
   const completedDays = Object.keys(state.dailyLogs).length;
   const progressPercentage = Math.round((completedDays / 90) * 100);
 
-  // Assuming '1' is today for the prototype, or we calculate it. For now, check if '1' exists.
-  // Actually, we should check if the current active day exists.
-  const todayEntry = state.dailyLogs['1'];
+  const todayEntry = state.dailyLogs[currentDayId];
 
   return (
     <div className="p-8 max-w-4xl mx-auto animate-fade-in space-y-10">
@@ -49,7 +47,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link to="/day/1" className="group bg-sage-green/10 p-6 rounded-2xl hover:bg-sage-green/20 transition-colors border border-sage-green/20 flex flex-col justify-between min-h-[160px]">
+        <Link to={`/day/${currentDayId}`} className="group bg-sage-green/10 p-6 rounded-2xl hover:bg-sage-green/20 transition-colors border border-sage-green/20 flex flex-col justify-between min-h-[160px]">
           <div>
             <Calendar className="text-sage-green-dark mb-4" size={32} />
             <h3 className="text-xl font-serif text-stone-900 mb-2">Today's Entry</h3>

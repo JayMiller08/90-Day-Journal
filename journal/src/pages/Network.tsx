@@ -98,7 +98,11 @@ export const Network = () => {
       
       if (!debouncedSearch.trim()) {
         // Suggested profiles
-        const { data } = await supabase.rpc('get_random_profiles', { limit_num: 15, exclude_id: user.id });
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, username, first_name, last_name, avatar_url')
+          .neq('id', user.id)
+          .limit(20);
         if (data) setSearchResults(data);
       } else {
         // Search

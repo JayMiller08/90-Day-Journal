@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Target, CalendarDays, Award, X, Activity, Users, LogOut, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useJournal } from '../context/JournalContext';
 
 interface NavigationProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => {
   const closeMenu = () => setIsOpen(false);
   const { signOut } = useAuth();
+  const { currentDayId } = useJournal();
 
   return (
     <>
@@ -104,7 +106,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isOpen, setIsOpen }) => 
           </div>
           
           <NavLink 
-            to="/day/1" 
+            to={`/day/${currentDayId}`} 
             onClick={closeMenu}
             className={({ isActive }) => 
               `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-sage-green/10 text-sage-green-dark font-medium' : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'}`

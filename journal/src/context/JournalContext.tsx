@@ -9,6 +9,7 @@ export type Goal = string;
 export interface DailyLog {
   id: string; // e.g. '1', '2'
   is_public?: boolean;
+  created_at?: string;
   morning: {
     wakeUpTime: string;
     mood: string;
@@ -79,6 +80,7 @@ interface JournalState {
 
 interface JournalContextProps {
   state: JournalState;
+  currentDayId: string;
   isLoading: boolean;
   saveVision: (goals: Goal[], purpose: string) => Promise<void>;
   saveDailyLog: (id: string, log: DailyLog) => Promise<void>;
@@ -101,6 +103,26 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [state, setState] = useState<JournalState>(defaultState);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+
+  const currentDayId = React.useMemo(() => {
+    const logs = Object.values(state.dailyLogs);
+    if (logs.length === 0) return '1';
+
+    const latestLog = logs.reduce((latest, current) => {
+      return parseInt(current.id) > parseInt(latest.id) ? current : latest;
+    });
+
+    if (!latestLog.created_at) return latestLog.id;
+
+    const lastDate = new Date(latestLog.created_at).toDateString();
+    const today = new Date().toDateString();
+
+    if (lastDate === today) {
+      return latestLog.id;
+    } else {
+      return String(parseInt(latestLog.id) + 1);
+    }
+  }, [state.dailyLogs]);
 
   useEffect(() => {
     if (!user) {
@@ -134,6 +156,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
             newState.dailyLogs[log.date_id] = {
               id: log.date_id,
               is_public: log.is_public,
+              created_at: log.created_at,
               morning: log.morning,
               meditation: log.meditation,
               faith: log.faith,
@@ -197,13 +220,19 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!user) return;
 
     // Optimistic update
-    setState(prev => ({
-      ...prev,
-      dailyLogs: {
-        ...prev.dailyLogs,
-        [id]: log
-      }
-    }));
+    setState(prev => {
+      const existingLog = prev.dailyLogs[id];
+      return {
+        ...prev,
+        dailyLogs: {
+          ...prev.dailyLogs,
+          [id]: {
+            ...log,
+            created_at: existingLog?.created_at || new Date().toISOString()
+          }
+        }
+      };
+    });
 
     // Transform log to match db schema
     const dbPayload = {
@@ -264,7 +293,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   return (
-    <JournalContext.Provider value={{ state, isLoading, saveVision, saveDailyLog, saveReview }}>
+    <JournalContext.Provider value={{ state, currentDayId, isLoading, saveVision, saveDailyLog, saveReview }}>
       {children}
     </JournalContext.Provider>
   );

@@ -26,6 +26,22 @@ export const DailyLog: React.FC = () => {
   const [log, setLog] = useState<DailyLogType>(defaultLog);
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    // Only show if we're not readonly, they have less than 3 saved logs, and haven't seen it yet
+    if (!isReadonly && Object.keys(state.dailyLogs).length < 3) {
+      const hasSeen = localStorage.getItem('hasSeenPublicTutorial');
+      if (!hasSeen) {
+        setShowTutorial(true);
+      }
+    }
+  }, [state.dailyLogs, isReadonly]);
+
+  const dismissTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('hasSeenPublicTutorial', 'true');
+  };
 
   useEffect(() => {
     if (id) {
@@ -77,15 +93,36 @@ export const DailyLog: React.FC = () => {
             <h1 className="text-4xl font-serif text-stone-900">Day {id} {isReadonly && <span className="text-2xl text-stone-400 ml-2">(Read-Only)</span>}</h1>
             <p className="text-stone-500 mt-2 text-lg">Your daily workspace for success.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative">
+            {showTutorial && (
+              <div className="absolute top-full right-0 mt-4 w-72 bg-stone-900 text-white p-4 rounded-xl shadow-xl z-50 animate-fade-in">
+                <div className="absolute -top-2 right-6 w-4 h-4 bg-stone-900 transform rotate-45"></div>
+                <h3 className="font-bold mb-2 flex items-center gap-2">
+                  <Globe size={18} className="text-green-400" />
+                  Share Your Journey
+                </h3>
+                <p className="text-sm text-stone-300 mb-4">
+                  Make your entry <strong>Public</strong> if you want your friends to see your progress on their feed. Private entries are only visible to you.
+                </p>
+                <button 
+                  onClick={dismissTutorial}
+                  className="w-full py-2 bg-white text-stone-900 rounded-lg text-sm font-bold hover:bg-stone-100 transition-colors"
+                >
+                  Got it!
+                </button>
+              </div>
+            )}
             <button
                 disabled={isReadonly}
-                onClick={() => handleChange('is_public' as any, '', !log.is_public)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                onClick={() => {
+                  handleChange('is_public' as any, '', !log.is_public);
+                  if (showTutorial) dismissTutorial();
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative z-10 ${
                     log.is_public 
                         ? 'bg-green-100 text-green-700 hover:bg-green-200' 
                         : 'bg-stone-200 text-stone-600 hover:bg-stone-300'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                } ${showTutorial ? 'ring-4 ring-stone-900/20' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
                 {log.is_public ? <Globe size={18} /> : <Lock size={18} />}
                 {log.is_public ? 'Public' : 'Private'}
