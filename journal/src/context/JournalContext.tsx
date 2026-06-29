@@ -84,6 +84,7 @@ interface JournalContextProps {
   isLoading: boolean;
   saveVision: (goals: Goal[], purpose: string) => Promise<void>;
   saveDailyLog: (id: string, log: DailyLog) => Promise<void>;
+  deleteDailyLog: (id: string) => Promise<void>;
   saveReview: (milestone: '30' | '60' | '90', review: MilestoneReview) => Promise<void>;
 }
 
@@ -259,6 +260,22 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const deleteDailyLog = async (id: string) => {
+    if (!user) return;
+
+    // Optimistic update
+    setState(prev => {
+      const newLogs = { ...prev.dailyLogs };
+      delete newLogs[id];
+      return {
+        ...prev,
+        dailyLogs: newLogs
+      };
+    });
+
+    await supabase.from('daily_logs').delete().eq('user_id', user.id).eq('date_id', id);
+  };
+
   const saveReview = async (milestone: '30' | '60' | '90', review: MilestoneReview) => {
     if (!user) return;
 
@@ -293,7 +310,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   return (
-    <JournalContext.Provider value={{ state, currentDayId, isLoading, saveVision, saveDailyLog, saveReview }}>
+    <JournalContext.Provider value={{ state, currentDayId, isLoading, saveVision, saveDailyLog, deleteDailyLog, saveReview }}>
       {children}
     </JournalContext.Provider>
   );

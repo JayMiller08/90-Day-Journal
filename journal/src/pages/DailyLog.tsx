@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useJournal, type DailyLog as DailyLogType } from '../context/JournalContext';
-import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon, Globe, Lock } from 'lucide-react';
+import { Sun, Brain, Heart, Briefcase, Activity, DollarSign, CheckSquare, Coffee, Moon, Globe, Lock, Trash2 } from 'lucide-react';
 
 const defaultLog: DailyLogType = {
   id: '',
@@ -22,7 +22,8 @@ export const DailyLog: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const isReadonly = location.state?.isReadonly || false;
-  const { state, saveDailyLog } = useJournal();
+  const navigate = useNavigate();
+  const { state, saveDailyLog, deleteDailyLog } = useJournal();
   const [log, setLog] = useState<DailyLogType>(defaultLog);
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -94,6 +95,20 @@ export const DailyLog: React.FC = () => {
             <p className="text-stone-500 mt-2 text-lg">Your daily workspace for success.</p>
         </div>
         <div className="flex items-center gap-3 relative">
+            {isReadonly && state.dailyLogs[id || ''] && (
+              <button
+                onClick={async () => {
+                  if (window.confirm('Are you sure you want to delete this entry? This action cannot be undone and will decrease your total completed days.')) {
+                    await deleteDailyLog(id!);
+                    navigate('/');
+                  }
+                }}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete Entry"
+              >
+                <Trash2 size={20} />
+              </button>
+            )}
             {showTutorial && (
               <div className="absolute top-full right-0 mt-4 w-72 bg-stone-900 text-white p-4 rounded-xl shadow-xl z-50 animate-fade-in">
                 <div className="absolute -top-2 right-6 w-4 h-4 bg-stone-900 transform rotate-45"></div>
